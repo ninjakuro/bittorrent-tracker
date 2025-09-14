@@ -8,10 +8,14 @@
     "format": "prettier ./src --write"
   },
   "devDependencies": {
+    "@types/bencode": "^2.0.4",
     "@types/node": "^20.19.0",
     "esbuild": "^0.25.5",
     "prettier": "3.5.3",
     "tsx": "^4.19.4",
     "typescript": "^5.8.3"
+  },
+  "dependencies": {
+    "bencode": "^4.0.0"
   }
 }
