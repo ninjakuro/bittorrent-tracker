@@ -1,5 +1,4 @@
 export interface RequestParams {
-	passkey: string;
 	info_hash: string;
 	peer_id: string;
 	port: number;
@@ -9,9 +8,9 @@ export interface RequestParams {
 	key: string;
 	event: string;
 	numwant: number;
-	compact: 1 | 0;
-	supportcrypto: 1 | 0;
-	no_peer_id: 1 | 0;
+	compact: number;
+	supportcrypto: number;
+	no_peer_id: number;
 	ip: string;
 	corrupt: number;
 	redundant: number;

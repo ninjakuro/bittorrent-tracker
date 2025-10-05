@@ -1,11 +1,11 @@
-FROM node:22-alpine as builder
+FROM node:22-slim as builder
 WORKDIR /app
 COPY package.json yarn.lock ./
 RUN yarn
 COPY . .
 RUN yarn build
 
-FROM node:22-alpine
+FROM node:22-slim
 WORKDIR /app
 COPY --from=builder /app .
 ENV PORT 3000

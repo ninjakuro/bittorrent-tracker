@@ -1,26 +1,5 @@
 import { parse } from 'node:querystring';
-import { QueryString, RequestParams } from '@/types';
-
-export function getParamsByQuery(query: QueryString<Partial<RequestParams>>): RequestParams {
-	return {
-		info_hash: query.info_hash || '',
-		peer_id: query.peer_id || '',
-		port: Number(query.port || 0),
-		uploaded: Number(query.uploaded || 0),
-		downloaded: Number(query.downloaded || 0),
-		left: Number(query.left || 0),
-		numwant: Number(query.numwant || 1),
-		event: query.event || '',
-		passkey: query.passkey || '',
-		ip: query.ip || '',
-		key: query.key || '',
-		corrupt: Number(query.corrupt || 0),
-		redundant: Number(query.redundant || 0),
-		supportcrypto: query.supportcrypto ? 1 : 0,
-		compact: query.compact ? 1 : 0,
-		no_peer_id: query.no_peer_id ? 1 : 0
-	};
-}
+import { Peer, Query, RequestParams } from '@/types';
 
 export function unescapeBinary(str: string) {
 	return str.replace(/%([0-9A-Fa-f]{2})/g, (_, hex) => {
@@ -40,7 +19,27 @@ export function hex2bin(hex: string) {
 	return Buffer.from(hex, 'hex').toString('binary');
 }
 
-export function encodeCompact(peers: any[]) {
+export function getTypedRequestParams(query: Query): RequestParams {
+	return {
+		info_hash: query.info_hash || '',
+		peer_id: query.peer_id || '',
+		port: Number(query.port),
+		uploaded: Number(query.uploaded) || 0,
+		downloaded: Number(query.downloaded) || 0,
+		left: Number(query.left) || Infinity,
+		key: query.key || '',
+		event: query.event || '',
+		numwant: Number(query.numwant),
+		compact: Number(query.compact) || 0,
+		supportcrypto: Number(query.supportcrypto) || 0,
+		no_peer_id: Number(query.no_peer_id) || 0,
+		ip: query.ip || '',
+		corrupt: Number(query.corrupt) || 0,
+		redundant: Number(query.redundant) || 0,
+	};
+}
+
+export function encodeCompact(peers: Peer[]) {
 	const buffer = Buffer.alloc(peers.length * 6);
 
 	peers.forEach((peer, index) => {

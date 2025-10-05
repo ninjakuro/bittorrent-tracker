@@ -2,16 +2,17 @@ import { IncomingMessage, ServerResponse } from 'node:http';
 import bencode from 'bencode';
 import { TrackerError } from '@/TrackerError';
 import { querystringParse } from '@/utils';
+import { getIp } from '@/http/utils';
 import { Query } from '@/types';
 
 type RouterRequest = IncomingMessage & { query: Query };
 
-type Handler = (req: RouterRequest, res: ServerResponse) => Promise<any>;
+export type RouteHandler = (req: RouterRequest, res: ServerResponse) => Promise<any>;
 
 export class Router {
-	constructor(private routes = new Map<string, Handler>()) {}
+	constructor(private routes = new Map<string, RouteHandler>()) {}
 
-	add(path: string, handler: Handler) {
+	add(path: string, handler: RouteHandler) {
 		this.routes.set(path, handler);
 	}
 
@@ -33,6 +34,10 @@ export class Router {
 			}
 
 			const query = querystringParse(queryString) as Query;
+			Object.assign(query, {
+				ip: query.ip || getIp(req),
+			});
+
 			const routerRequest = Object.assign(req, { query }) as RouterRequest;
 			const result = await handler(routerRequest, res);
 
