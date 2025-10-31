@@ -3,17 +3,13 @@ import bencode from 'bencode';
 import { TrackerError } from '@/TrackerError';
 import { querystringParse } from '@/utils';
 import { getIp } from '@/http/utils';
-import { Query } from '@/types';
+import { IRouter, Query, RouteHandler, RouterRequest } from '@/types';
 
-type RouterRequest = IncomingMessage & { query: Query };
+export class HttpRouter implements IRouter {
+	constructor(private routes = new Map<string, RouteHandler[]>()) {}
 
-export type RouteHandler = (req: RouterRequest, res: ServerResponse) => Promise<any>;
-
-export class Router {
-	constructor(private routes = new Map<string, RouteHandler>()) {}
-
-	add(path: string, handler: RouteHandler) {
-		this.routes.set(path, handler);
+	add(path: string, ...args: RouteHandler[]) {
+		this.routes.set(path, args);
 	}
 
 	async handle(req: IncomingMessage, res: ServerResponse) {
@@ -27,29 +23,37 @@ export class Router {
 			}
 
 			const [pathname, queryString] = req.url.split('?');
-			const handler = this.routes.get(pathname);
+			const handlers = this.routes.get(pathname);
 
-			if (!handler) {
+			if (!handlers) {
 				throw new TrackerError('Not found', 404);
 			}
 
-			const query = querystringParse(queryString) as Query;
-			Object.assign(query, {
-				ip: query.ip || getIp(req),
-			});
+			for (const handler of handlers) {
+				const query = querystringParse(queryString) as Query;
+				Object.assign(query, {
+					ip: query.ip || getIp(req),
+				});
 
-			const routerRequest = Object.assign(req, { query }) as RouterRequest;
-			const result = await handler(routerRequest, res);
+				const routerRequest = Object.assign(req, { query }) as RouterRequest;
+				const result = await handler(routerRequest, res);
 
-			res.end(bencode.encode(result));
+				if (result && !res.writableEnded) {
+					res.end(bencode.encode(result));
+				}
+			}
 		} catch (err) {
 			if (err instanceof TrackerError) {
-				res.statusCode = err.statusCode;
-				res.end(bencode.encode({ 'failure reason': err.message }));
+				if (!res.writableEnded) {
+					res.statusCode = err.statusCode;
+					res.end(bencode.encode({ 'failure reason': err.message }));
+				}
 			} else {
 				console.error(err);
-				res.statusCode = 500;
-				res.end(bencode.encode({ 'failure reason': 'Unknown server error' }));
+				if (!res.writableEnded) {
+					res.statusCode = 500;
+					res.end(bencode.encode({ 'failure reason': 'Unknown server error' }));
+				}
 			}
 		}
 	}

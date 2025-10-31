@@ -1,10 +1,10 @@
 import { createServer, Server } from 'node:http';
-import { Router, RouteHandler } from './Router';
+import { IRouter, RouteHandler } from '@/types';
 
 export class HttpServer {
 	private server: Server;
 
-	constructor(private router: Router = new Router()) {
+	constructor(private router: IRouter) {
 		this.server = createServer((req, res) => {
 			this.router.handle(req, res);
 		});
@@ -15,8 +15,8 @@ export class HttpServer {
 		});
 	}
 
-	route(path: string, handler: RouteHandler) {
-		this.router.add(path, handler);
+	route(path: string, ...args: RouteHandler[]) {
+		this.router.add(path, ...args);
 	}
 
 	listen(port: number, callback?: () => void) {
